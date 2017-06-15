@@ -32,8 +32,11 @@ getRow::(Eq a) => a -> [[a]] -> Int -> [Int]
 getRow what cells which = elemIndices what (cells!!which)
 
 evalRow:: Int -> [Int] -> Int -> Int -> Int
-evalRow lastInd [] sumator rowCount = rowCount + (chainVal sumator)
+evalRow lastInd [] sumator rowCount
+    | sumator == 5 = (-1)
+    | otherwise = rowCount + (chainVal sumator)
 evalRow lastInd (x:xs) sumator rowCount
+    | sumator == 5 = (-1)
     | lastInd == (-1) = evalRow x xs 1 0
     | x == (lastInd+1) = evalRow x xs (sumator+1) rowCount
     | x /= (lastInd+1) = evalRow x xs 1 (rowCount + (chainVal sumator))
@@ -81,28 +84,38 @@ addPoint x y figure list =
 
 main :: IO ()
 main = do
-    loop board
+    loop board White
 
-loop:: Board -> IO()
-loop board1 = do
-    putStrLn "Ruch gracza Kolko"
+loop:: Board -> Color -> IO()
+loop board1 color = do
+    putStr "Ruch gracza "
+    putStrLn $ show color
     putStr "Wiersz: "
     x <- getLine
     putStr "Kolumna: "
     y <- getLine
-    let board2 = insertFigure board1 (read x::Int) (read y::Int) Black
+    let board2 = insertFigure board1 (read x::Int) (read y::Int) color
     putStrLn $ show board2
-    putStr "Kolko posiada: "
-    let wynik = evalRows (Point 1 1 Black) (getPoints board2)
+    putStr $ show color
+    putStr " posiada punktow: "
+    let wynik = evalRows (Point 1 1 color) (getPoints board2)
     print wynik
-    putStrLn "Ruch gracza Krzyzyk"
-    putStr "Wiersz: "
-    x <- getLine
-    putStr "Kolumna: "
-    y <- getLine
-    let board1 = insertFigure board2 (read x::Int) (read y::Int) White
+    checkResult board2 color wynik
+
+checkResult:: Board -> Color -> Int -> IO()
+checkResult board1 color wynik = do
+    if(wynik == (-1)) then
+        gameOver board1 color
+    else do
+        if (color == Black) then do
+            let color2 = White
+            loop board1 color2
+        else do
+            let color2 = Black
+            loop board1 color2
+
+gameOver:: Board -> Color -> IO()
+gameOver board1 color = do
     putStrLn $ show board1
-    putStr "Krzyzyk posiada: "
-    let wynik = evalRows (Point 1 1 White) (getPoints board1)
-    print wynik
-    loop board1
+    putStrLn $ show color
+    putStrLn " WYGRAL"
