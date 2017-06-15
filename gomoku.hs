@@ -29,7 +29,7 @@ instance Show Color where
 -- evalRows:: [[Point]] -> Int
 -- evalRows cells =
 
-getRow::Int -> [[Int]] -> Int -> [Int]
+getRow::(Eq a) => a -> [[a]] -> Int -> [Int]
 getRow what cells which = elemIndices what (cells!!which)
 
 evalRow:: Int -> [Int] -> Int -> Int -> Int
@@ -41,6 +41,9 @@ evalRow lastInd (x:xs) sumator rowCount
 
 evalRowStart:: (Eq a) => a -> [a] -> Int
 evalRowStart what ls = evalRow (-1) (elemIndices what ls) 0 0
+
+evalRows:: (Eq a) => a -> [[a]] -> Int
+evalRows color ls = sum [x | j <- [0..((length ls)-1)], x <- [(evalRowStart color (ls!!j))]]
 
 makeColumns :: Int -> Int -> [Point]-> [Point]
 makeColumns x y list
