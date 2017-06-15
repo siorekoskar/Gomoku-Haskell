@@ -1,9 +1,11 @@
 import Data.List
-import Data.Maybe
 
 data Board = Board {size :: Int, cells :: [[Point]]}
 
 data Point = Point {x :: Int, y :: Int, color :: Color}
+
+instance Eq Point where
+    (Point _ _ c1) == (Point _ _ c2) = c1 == c2
 
 data Color = Black | White | Empty deriving Eq
 
@@ -23,11 +25,8 @@ instance Show Color where
     show Black = " o "
     show White = " x "
 
--- getPoints:: Board -> [[Point]]
--- getPoints _ _ cells = cells
-
--- evalRows:: [[Point]] -> Int
--- evalRows cells =
+getPoints:: Board -> [[Point]]
+getPoints (Board _ cells) = cells
 
 getRow::(Eq a) => a -> [[a]] -> Int -> [Int]
 getRow what cells which = elemIndices what (cells!!which)
@@ -44,6 +43,8 @@ evalRowStart what ls = evalRow (-1) (elemIndices what ls) 0 0
 
 evalRows:: (Eq a) => a -> [[a]] -> Int
 evalRows color ls = sum [x | j <- [0..((length ls)-1)], x <- [(evalRowStart color (ls!!j))]]
+
+--evalRows (Point 1 1 Black) (getPoints board) - tak sprawdzac
 
 makeColumns :: Int -> Int -> [Point]-> [Point]
 makeColumns x y list
@@ -91,6 +92,9 @@ loop board1 = do
     y <- getLine
     let board2 = insertFigure board1 (read x::Int) (read y::Int) Black
     putStrLn $ show board2
+    putStr "Kolko posiada: "
+    let wynik = evalRows (Point 1 1 Black) (getPoints board2)
+    print wynik
     putStrLn "Ruch gracza Krzyzyk"
     putStr "Wiersz: "
     x <- getLine
@@ -98,4 +102,7 @@ loop board1 = do
     y <- getLine
     let board1 = insertFigure board2 (read x::Int) (read y::Int) White
     putStrLn $ show board1
+    putStr "Krzyzyk posiada: "
+    let wynik = evalRows (Point 1 1 White) (getPoints board1)
+    print wynik
     loop board1
