@@ -16,17 +16,25 @@ board = Board 19 (makeBoard 18 18 [])
 newBoard = Board 19 (insertF board 5 8 Black)
 newBoard2 = Board 19 (insertF newBoard 6 9 Black)
 board5 = Board 4 (makeBoard 3 3 [])
-board5N = Board 4 (insertF board5 3 3 White)
+board5N = Board 4 (insertF board5 0 0 White)
+board5B = Board 4 (insertF board5 0 0 Black)
+board5D = Board 4 (insertF board5B 2 2 Black)
+board5e = Board 4 (insertF board5D 2 3 White)
+board5f = Board 4 (insertF board5e 3 3 White)
 
 generateTree1 color board = Node board (evalBoard board5 color) 0 0 [(Node x (evalBoard x color) i j [])| i <- [0..len], j <- [0..len], x <- [((genBoardsStart board color)!!i!!j)]]
     where len = ((length $ (getPoints board)!!1)-1)
 
-findBest (Node board v x y xs) = getBestPos xs 0 0 0
 
-getBestPos [] _ x y = (x,y)
-getBestPos ((Node b v x y _):xs) b1 x1 y1
-    | b1 < v = getBestPos xs v x y
-    | otherwise = getBestPos xs b1 x1 y1
+findBest (Node board v x y ((Node b v1 x1 y1 []):xs)) = getBestPos xs b v x y
+
+getBestPos [] b v x y = (Node b v x y [])
+getBestPos ((Node b v x y _):xs) bo v1 x1 y1
+    -- | v1 <= v  = getBestPos xs b v x y
+    | v1 <= v && (color /= (Point 1 1 Empty)) = getBestPos xs b v x y
+    -- | color /= Empty = getBestPos xs bo v1 x1 y1
+    | otherwise = getBestPos xs bo v1 x1 y1
+    where color = ((getPoints b)!!x!!y)
 
 
 genBoardsStart:: Board -> Color -> [[Board]]
