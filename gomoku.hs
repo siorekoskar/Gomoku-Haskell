@@ -21,17 +21,20 @@ board5B = Board 4 (insertF board5 0 0 Black)
 board5D = Board 4 (insertF board5B 2 2 Black)
 board5e = Board 4 (insertF board5D 2 3 White)
 board5f = Board 4 (insertF board5e 3 3 White)
+board5g = insertFigure board5 0 0 White
+board10 = Board 10 (makeBoard 11 11 [])
 
 generateTree1 color board = Node board (evalBoard board5 color) 0 0 [(Node x (evalBoard x color) i j [])| i <- [0..len], j <- [0..len], x <- [((genBoardsStart board color)!!i!!j)]]
     where len = ((length $ (getPoints board)!!1)-1)
 
+getFromTree (Node board _ _ _ _) = board
 
 findBest (Node board v x y ((Node b v1 x1 y1 []):xs)) = getBestPos xs b v x y
 
 getBestPos [] b v x y = (Node b v x y [])
 getBestPos ((Node b v x y _):xs) bo v1 x1 y1
     -- | v1 <= v  = getBestPos xs b v x y
-    | v1 <= v && (color /= (Point 1 1 Empty)) = getBestPos xs b v x y
+    | v1 <= v && (color /= (Point 1 1 Empty))  = getBestPos xs b v x y
     -- | color /= Empty = getBestPos xs bo v1 x1 y1
     | otherwise = getBestPos xs bo v1 x1 y1
     where color = ((getPoints b)!!x!!y)
@@ -137,9 +140,45 @@ addPoint :: Int -> Int -> Color -> [Point] -> [Point]
 addPoint x y figure list =
     let (a,b) = splitAt y list in (a ++ [Point x y figure] ++ (tail b))
 
-
 rotateRight :: [[a]] -> [[a]]
 rotateRight = transpose . reverse
+
+pcAi :: IO ()
+pcAi = do
+    pcAiLoop board10
+
+--pcAiLoop :: GameTree a -> IO ()
+pcAiLoop board5 = do
+    let color = Black
+    putStr "Ruch gracza "
+    putStrLn $ show color
+    putStr "Wiersz: "
+    x <- getLine
+    putStr "Kolumna: "
+    y <- getLine
+    --let board5 = getFromTree boardTree
+    let board2 = Board ((length $ (getPoints board5) !!1)) (insertF board5 (read x::Int) (read y::Int) color)
+    putStrLn $ show board2
+    putStr $ show color
+    --putStr " posiada punktow: "
+    let wynik = evalBoard board2 color
+    print wynik
+    putStr "Ruch ai "
+    let color = White
+    let t1 = generateTree1 color board2
+    --print t1
+    let best1 = findBest t1
+    let board2 = getFromTree best1
+    putStrLn " "
+    putStrLn $ show board2
+    putStrLn $ show color
+    pcAiLoop board2
+
+aiAi :: IO ()
+aiAi = do
+    aiAiLoop board10
+
+
 
 main :: IO ()
 main = do
