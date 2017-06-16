@@ -51,17 +51,12 @@ evalRow lastInd (x:xs) sumator rowCount
 evalRowStart:: (Eq a) => a -> [a] -> Int
 evalRowStart what ls = evalRow (-1) (elemIndices what ls) 0 0
 
---diagonals $ transposeMatrix $ [[Black, Black, Black], [White, Black, Black], [White, Black, Black]]
---evalRowStart Black ((diagonals $ [[Black, Black, Black], [White, Black, Black], [White, Black, Black]])!!2)
-
 evalRows:: (Eq a) => a -> [[a]] -> Int
 evalRows color ls = sum [x | j <- [0..((length ls)-1)], x <- [(evalRowStart color (ls!!j))]]
 
 evalDiags:: (Eq a) => a -> [[a]] -> Int -> Int
 evalDiags color [] sumator = sumator
 evalDiags color (x:xs) sumator = evalDiags color xs (sumator + evalRowStart color x)
-
---evalRows (Point 1 1 Black) (getPoints board) - tak sprawdzac
 
 makeColumns :: Int -> Int -> [Point]-> [Point]
 makeColumns x y list
@@ -105,6 +100,16 @@ main :: IO ()
 main = do
     loop board White
 
+evalBoard:: Board -> Color -> Int
+evalBoard board1 color
+    | wynik1 /= (-1) && wynik2 /= (-1) && wynik3 /= (-1) && wynik4 /= (-1) = wynik1+wynik2+wynik3+wynik4
+    | otherwise = (-1)
+    where
+        wynik1 = evalRows (Point 1 1 color) (getPoints board1)
+        wynik2 = evalRows (Point 1 1 color) (rotateRight $ getPoints board1)
+        wynik3 = evalDiags (Point 1 1 color) (diagonals $ getPoints board1) 0
+        wynik4 = evalDiags (Point 1 1 color) (diagonals $ rotateRight $ getPoints board1) 0
+
 loop:: Board -> Color -> IO()
 loop board1 color = do
     putStr "Ruch gracza "
@@ -117,12 +122,9 @@ loop board1 color = do
     putStrLn $ show board2
     putStr $ show color
     putStr " posiada punktow: "
-    let wynik = evalRows (Point 1 1 color) (getPoints board2)
-    let wynik2 = evalRows (Point 1 1 color) (rotateRight $ getPoints board2) + wynik
-    let wynik3 = evalDiags (Point 1 1 color) (diagonals $ getPoints board2) 0 + wynik2
-    let wynik4 = evalDiags (Point 1 1 color) (diagonals $ rotateRight $ getPoints board2) 0 + wynik3 -- fix potrzebny
-    print wynik4
-    checkResult board2 color wynik2
+    let wynik = evalBoard board2 color
+    print wynik
+    checkResult board2 color wynik
 
 checkResult:: Board -> Color -> Int -> IO()
 checkResult board1 color wynik = do
