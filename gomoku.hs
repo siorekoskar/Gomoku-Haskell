@@ -25,6 +25,13 @@ instance Show Color where
     show Black = " o "
     show White = " x "
 
+diagonals :: [[a]] -> [[a]]
+diagonals = tail . go [] where
+    go b es_ = [h | h:_ <- b] : case es_ of
+        []   -> transpose ts
+        e:es -> go (e:ts) es
+        where ts = [t | _:t <- b]
+
 getPoints:: Board -> [[Point]]
 getPoints (Board _ cells) = cells
 
@@ -44,8 +51,15 @@ evalRow lastInd (x:xs) sumator rowCount
 evalRowStart:: (Eq a) => a -> [a] -> Int
 evalRowStart what ls = evalRow (-1) (elemIndices what ls) 0 0
 
+--diagonals $ transposeMatrix $ [[Black, Black, Black], [White, Black, Black], [White, Black, Black]]
+--evalRowStart Black ((diagonals $ [[Black, Black, Black], [White, Black, Black], [White, Black, Black]])!!2)
+
 evalRows:: (Eq a) => a -> [[a]] -> Int
 evalRows color ls = sum [x | j <- [0..((length ls)-1)], x <- [(evalRowStart color (ls!!j))]]
+
+evalDiags:: (Eq a) => a -> [[a]] -> Int -> Int
+evalDiags color [] sumator = sumator
+evalDiags color (x:xs) sumator = evalDiags color xs (sumator + evalRowStart color x)
 
 --evalRows (Point 1 1 Black) (getPoints board) - tak sprawdzac
 
@@ -65,6 +79,7 @@ makeBoard x y list
 board :: Board
 board = Board 19 (makeBoard 18 18 [])
 newBoard = Board 19 (insertF board 5 8 Black)
+newBoard2 = Board 19 (insertF newBoard 6 9 Black)
 
 insertFigure :: Board -> Int -> Int -> Color -> Board
 insertFigure board x y figure
@@ -81,6 +96,10 @@ insertF board x y figure =
 addPoint :: Int -> Int -> Color -> [Point] -> [Point]
 addPoint x y figure list =
     let (a,b) = splitAt y list in (a ++ [Point x y figure] ++ (tail b))
+
+
+rotateRight :: [[a]] -> [[a]]
+rotateRight = transpose . reverse
 
 main :: IO ()
 main = do
@@ -99,8 +118,11 @@ loop board1 color = do
     putStr $ show color
     putStr " posiada punktow: "
     let wynik = evalRows (Point 1 1 color) (getPoints board2)
-    print wynik
-    checkResult board2 color wynik
+    let wynik2 = evalRows (Point 1 1 color) (rotateRight $ getPoints board2) + wynik
+    let wynik3 = evalDiags (Point 1 1 color) (diagonals $ getPoints board2) 0 + wynik2
+    let wynik4 = evalDiags (Point 1 1 color) (diagonals $ rotateRight $ getPoints board2) 0 + wynik3 -- fix potrzebny
+    print wynik4
+    checkResult board2 color wynik2
 
 checkResult:: Board -> Color -> Int -> IO()
 checkResult board1 color wynik = do
