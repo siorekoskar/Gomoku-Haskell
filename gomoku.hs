@@ -9,6 +9,35 @@ instance Eq Point where
 
 data Color = Black | White | Empty deriving Eq
 
+data GameTree a = Node a [GameTree a] | EmptyTree deriving Show
+
+board :: Board
+board = Board 19 (makeBoard 18 18 [])
+newBoard = Board 19 (insertF board 5 8 Black)
+newBoard2 = Board 19 (insertF newBoard 6 9 Black)
+
+genBoardsStart:: Board -> Color -> [[Board]]
+genBoardsStart board1 color = genBoards board1 [] color 18
+--uzywac genBoardsStart board Black
+
+genBoards:: Board -> [[Board]]-> Color -> Int -> [[Board]]
+genBoards _ xs _ (-1) = xs
+genBoards board1 xs color which = genBoards board1 (boardNew:xs) color (which-1)
+    where boardNew = (generateBoards board1 color which 18 [])
+
+generateBoards:: Board -> Color -> Int -> Int -> [Board] -> [Board]
+generateBoards _ _ _ (-1) xs = xs
+generateBoards board1 color which j xs
+    | elemIndices j available /= [] = generateBoards board1 color which (j-1) ((insertFigure board1 which j color):xs)
+    | otherwise = generateBoards board1 color which (j-1) (board1:xs)
+    where available = ((getAvailablePositions board1)!!which)
+
+getAvailablePos:: Board -> Int -> [Int]
+getAvailablePos (Board len cells) which = [x | x <- (elemIndices (Point 1 1 Empty) (cells!!which))]
+
+getAvailablePositions:: Board -> [[Int]]
+getAvailablePositions (Board len cells) = [x | j <- [0..(len-1)], x <- [getAvailablePos board j]]
+
 chainVal 2 = 1
 chainVal 3 = 5
 chainVal 4 = 100
@@ -70,11 +99,6 @@ makeBoard x y list
     | x == -1 = list
     | otherwise = makeBoard (x-1) y (b:list)
     where b = makeColumns x y []
-
-board :: Board
-board = Board 19 (makeBoard 18 18 [])
-newBoard = Board 19 (insertF board 5 8 Black)
-newBoard2 = Board 19 (insertF newBoard 6 9 Black)
 
 insertFigure :: Board -> Int -> Int -> Color -> Board
 insertFigure board x y figure
