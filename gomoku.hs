@@ -9,7 +9,7 @@ instance Eq Point where
 
 data Color = Black | White | Empty deriving Eq
 
-data GameTree a = Node a [GameTree a] | EmptyTree deriving Show
+data GameTree a = Node a Int Int Int [GameTree a] | EmptyTree deriving Show
 
 board :: Board
 board = Board 19 (makeBoard 18 18 [])
@@ -17,6 +17,17 @@ newBoard = Board 19 (insertF board 5 8 Black)
 newBoard2 = Board 19 (insertF newBoard 6 9 Black)
 board5 = Board 4 (makeBoard 3 3 [])
 board5N = Board 4 (insertF board5 3 3 White)
+
+generateTree1 color board = Node board (evalBoard board5 color) 0 0 [(Node x (evalBoard x color) i j [])| i <- [0..len], j <- [0..len], x <- [((genBoardsStart board color)!!i!!j)]]
+    where len = ((length $ (getPoints board)!!1)-1)
+
+findBest (Node board v x y xs) = getBestPos xs 0 0 0
+
+getBestPos [] _ x y = (x,y)
+getBestPos ((Node b v x y _):xs) b1 x1 y1
+    | b1 < v = getBestPos xs v x y
+    | otherwise = getBestPos xs b1 x1 y1
+
 
 genBoardsStart:: Board -> Color -> [[Board]]
 genBoardsStart board1 color = genBoards board1 [] color ((length $ (getPoints board1)!!1)-1)
@@ -92,7 +103,6 @@ evalDiags color (x:xs) sumator = evalDiags color xs (sumator + evalRowStart colo
 makeColumns :: Int -> Int -> [Point]-> [Point]
 makeColumns x y list
     | y == -1 = list
---    | y == 9 && x == 9 = makeColumns x (y-1) ((Point x y Black):list) -- branch getposition
     | otherwise = makeColumns x (y-1) (b:list)
     where b = Point x y Empty
 
