@@ -15,15 +15,17 @@ board :: Board
 board = Board 19 (makeBoard 18 18 [])
 newBoard = Board 19 (insertF board 5 8 Black)
 newBoard2 = Board 19 (insertF newBoard 6 9 Black)
+board5 = Board 4 (makeBoard 3 3 [])
+board5N = Board 4 (insertF board5 3 3 White)
 
 genBoardsStart:: Board -> Color -> [[Board]]
-genBoardsStart board1 color = genBoards board1 [] color 18
+genBoardsStart board1 color = genBoards board1 [] color ((length $ (getPoints board1)!!1)-1)
 --uzywac genBoardsStart board Black
 
 genBoards:: Board -> [[Board]]-> Color -> Int -> [[Board]]
 genBoards _ xs _ (-1) = xs
 genBoards board1 xs color which = genBoards board1 (boardNew:xs) color (which-1)
-    where boardNew = (generateBoards board1 color which 18 [])
+    where boardNew = (generateBoards board1 color which ((length $ (getPoints board1)!!1)-1) [])
 
 generateBoards:: Board -> Color -> Int -> Int -> [Board] -> [Board]
 generateBoards _ _ _ (-1) xs = xs
@@ -102,8 +104,9 @@ makeBoard x y list
 
 insertFigure :: Board -> Int -> Int -> Color -> Board
 insertFigure board x y figure
+    | color (cells board !! x !! y) /= Empty = board
     | x > size board || y > size board || x < 0 || y < 0 = board
-    | color (cells board !! x !! y) == Empty = Board 19 (insertF board x y figure)
+    | color (cells board !! x !! y) == Empty = Board ((length $ (getPoints board)!!1)-1) (insertF board x y figure)
     | color (cells board !! x !! y) == figure = board
 
 insertF :: Board -> Int -> Int -> Color -> [[Point]]
