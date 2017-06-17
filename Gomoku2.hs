@@ -1,3 +1,5 @@
+{-# LANGUAGE InstanceSigs #-}
+
 module Gomoku2 where
 
 import Data.List
@@ -11,7 +13,11 @@ instance Eq Point where
 
 data Color = Black | White | Empty deriving Eq
 
-data GameTree a = Node a Int Int Int [GameTree a] | EmptyTree deriving Show
+data GameTree a = Node a Int Int Int [GameTree a] deriving Show
+
+-- instance Functor GameTree a where
+--     fmap:: (a->b) -> GameTree a -> GameTree a
+--     fmap f (Node b v x y (xs:list)) = Node b v x y
 
 board :: Board
 board = Board 19 (makeBoard 18 18 [])
@@ -30,6 +36,12 @@ board10g = Board 10 (insertF board10 9 8 White)
 board10f = Board 10 (insertF board10g 9 9 White)
 board10false2 = Board 10 (insertF board10false 9 9 Black)
 
+oppositeColor color
+    | color == Black = White
+    | otherwise = Black
+
+--(evalBoard board color)
+
 generateTree1 color board = Node board (evalBoard board color) 0 0 [(Node x (evalBoard x color) i j [])| i <- [0..len], j <- [0..len], x <- [((genBoardsStart board color)!!i!!j)]]
     where len = ((length $ (getPoints board)!!1)-1)
 
@@ -47,14 +59,26 @@ findBest (Node board v x y ((Node b v1 x1 y1 []):xs)) = getBestPos xs b v x y
 
 getBestPos [] b v x y = (Node b v x y [])
 getBestPos ((Node b v x y _):xs) bo v1 x1 y1
-    -- | v1 <= v  = getBestPos xs b v x y
-    | v == (-1) = (Node b v x y [])
-    -- | color /= (Point 1 1 Empty) && x == (length((getPoints b)!!1)-1) = getBestPos [] bo v1 x1 y1
     | v1 <= v && (color /= (Point 1 1 Empty))  = getBestPos xs b v x y
-
-    -- | color /= Empty = getBestPos xs bo v1 x1 y1
     | otherwise = getBestPos xs bo v1 x1 y1
     where color = ((getPoints b)!!x!!y)
+
+    -- | v1 <= v  = getBestPos xs b v x y
+--    | v == (-1) = (Node b v x y [])
+    -- | color /= (Point 1 1 Empty) && x == (length((getPoints b)!!1)-1) = getBestPos [] bo v1 x1 y1
+
+    -- | color /= Empty = getBestPos xs bo v1 x1 y1
+
+findWorst (Node board v x y ((Node b v1 x1 y1 []):xs)) = getWorstPos xs b v x y
+
+getWorstPos [] b v x y = (Node b v x y [])
+getWorstPos ((Node b v x y _):xs) bo v1 x1 y1
+    | v1 >= v && (color /= (Point 1 1 Empty))  = getWorstPos xs b v x y
+    | otherwise = getWorstPos xs bo v1 x1 y1
+    where color = ((getPoints b)!!x!!y)
+
+minFind1 board color = findWorst $ generateTree2 color board
+maxFind1 board color = findBest
 
 
 genBoardsStart:: Board -> Color -> [[Board]]
@@ -110,10 +134,12 @@ getRow what cells which = elemIndices what (cells!!which)
 
 evalRow:: Int -> [Int] -> Int -> Int -> Int
 evalRow lastInd [] sumator rowCount
-    | sumator == 5 = (-1)
+    | sumator == 5 = 100000
+    -- | sumator == 5 = (-1)
     | otherwise = rowCount + (chainVal sumator)
 evalRow lastInd (x:xs) sumator rowCount
-    | sumator == 5 = (-1)
+    -- | sumator == 5 = (-1)
+    | sumator == 5 = 100000
     | lastInd == (-1) = evalRow x xs 1 0
     | x == (lastInd+1) = evalRow x xs (sumator+1) rowCount
     | x /= (lastInd+1) = evalRow x xs 1 (rowCount + (chainVal sumator))
@@ -161,9 +187,9 @@ rotateRight :: [[a]] -> [[a]]
 rotateRight = transpose . reverse
 
 evalBoard:: Board -> Color -> Int
-evalBoard board1 color
-    | wynik1 /= (-1) && wynik2 /= (-1) && wynik3 /= (-1) && wynik4 /= (-1) = wynik1+wynik2+wynik3+wynik4
-    | otherwise = (-1)
+evalBoard board1 color = wynik1+wynik2+wynik3+wynik4
+--    | wynik1 /= (-1) && wynik2 /= (-1) && wynik3 /= (-1) && wynik4 /= (-1) = wynik1+wynik2+wynik3+wynik4
+--    | otherwise = (-1)
     where
         wynik1 = evalRows (Point 1 1 color) (getPoints board1)
         wynik2 = evalRows (Point 1 1 color) (rotateRight $ getPoints board1)
