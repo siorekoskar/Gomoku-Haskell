@@ -22,19 +22,28 @@ board5D = Board 4 (insertF board5B 2 2 Black)
 board5e = Board 4 (insertF board5D 2 3 White)
 board5f = Board 4 (insertF board5e 3 3 White)
 board5g = insertFigure board5 0 0 White
-board10 = Board 10 (makeBoard 11 11 [])
+board10 = Board 10 (makeBoard 9 9 [])
+board10false = Board 10 (insertF board10 5 5 White)
+board10g = Board 10 (insertF board10 9 8 White)
+board10f = Board 10 (insertF board10g 9 9 White)
+board10false2 = Board 10 (insertF board10false 9 9 Black)
 
 generateTree1 color board = Node board (evalBoard board5 color) 0 0 [(Node x (evalBoard x color) i j [])| i <- [0..len], j <- [0..len], x <- [((genBoardsStart board color)!!i!!j)]]
     where len = ((length $ (getPoints board)!!1)-1)
 
 getFromTree (Node board _ _ _ _) = board
 
+getResult (Node _ v _ _ _) = v
+
 findBest (Node board v x y ((Node b v1 x1 y1 []):xs)) = getBestPos xs b v x y
 
 getBestPos [] b v x y = (Node b v x y [])
 getBestPos ((Node b v x y _):xs) bo v1 x1 y1
     -- | v1 <= v  = getBestPos xs b v x y
+    | v == (-1) = (Node b v x y [])
+    -- | color /= (Point 1 1 Empty) && x == (length((getPoints b)!!1)-1) = getBestPos [] bo v1 x1 y1
     | v1 <= v && (color /= (Point 1 1 Empty))  = getBestPos xs b v x y
+
     -- | color /= Empty = getBestPos xs bo v1 x1 y1
     | otherwise = getBestPos xs bo v1 x1 y1
     where color = ((getPoints b)!!x!!y)
@@ -52,7 +61,7 @@ genBoards board1 xs color which = genBoards board1 (boardNew:xs) color (which-1)
 generateBoards:: Board -> Color -> Int -> Int -> [Board] -> [Board]
 generateBoards _ _ _ (-1) xs = xs
 generateBoards board1 color which j xs
-    | elemIndices j available /= [] = generateBoards board1 color which (j-1) ((insertFigure board1 which j color):xs)
+    | elemIndices j available /= [] = generateBoards board1 color which (j-1) ((insertFigure board1 which j color):xs) --(Board ((length $ (getPoints board1) !!1)) (insertF board1 which j color):xs)--((insertFigure board1 which j color):xs)
     | otherwise = generateBoards board1 color which (j-1) (board1:xs)
     where available = ((getAvailablePositions board1)!!which)
 
@@ -127,7 +136,7 @@ insertFigure :: Board -> Int -> Int -> Color -> Board
 insertFigure board x y figure
     | color (cells board !! x !! y) /= Empty = board
     | x > size board || y > size board || x < 0 || y < 0 = board
-    | color (cells board !! x !! y) == Empty = Board ((length $ (getPoints board)!!1)-1) (insertF board x y figure)
+    | color (cells board !! x !! y) == Empty = Board ((length $ (getPoints board)!!1)) (insertF board x y figure)
     | color (cells board !! x !! y) == figure = board
 
 insertF :: Board -> Int -> Int -> Color -> [[Point]]
@@ -143,6 +152,8 @@ addPoint x y figure list =
 rotateRight :: [[a]] -> [[a]]
 rotateRight = transpose . reverse
 
+
+-- ---------------------------------------------
 pcAi :: IO ()
 pcAi = do
     pcAiLoop board10
@@ -162,23 +173,77 @@ pcAiLoop board5 = do
     putStr $ show color
     --putStr " posiada punktow: "
     let wynik = evalBoard board2 color
+    checkResultPcAi board2 color wynik
     print wynik
-    putStr "Ruch ai "
-    let color = White
-    let t1 = generateTree1 color board2
-    --print t1
-    let best1 = findBest t1
-    let board2 = getFromTree best1
-    putStrLn " "
-    putStrLn $ show board2
-    putStrLn $ show color
-    pcAiLoop board2
+
+checkResultPcAi:: Board -> Color -> Int -> IO()
+checkResultPcAi board1 color wynik = do
+    if(wynik == (-1)) then
+        gameOver board1 color
+    else do
+        aiTime board1
+
+aiTime board5 = do
+        putStr "Ruch ai "
+        let color = White
+        let t1 = generateTree1 color board5
+            --print t1
+        let best1 = findBest t1
+        let board2 = getFromTree best1
+        putStrLn " "
+        putStrLn $ show board2
+        putStrLn $ show color
+        let wynik = evalBoard board2 color
+        check board2 wynik color
+
+check board5 wynik color= do
+    if (wynik == (-1)) then
+        gameOver board5 color
+    else do
+        pcAiLoop board5
+
+
+-------------------------------------------
 
 aiAi :: IO ()
 aiAi = do
-    aiAiLoop board10
+    aiAiLoop board10false Black
 
+aiAiLoop board10 color = do
+    putStr "Ai "
+    putStr $ show color
+    x <- getLine
+    let t1 = generateTree1 color board10
+    let best1 = findBest t1
+    let board2 = getFromTree best1
+    let wynik1 = getResult best1
+    putStrLn $ show board2
+    putStrLn "-------"
+    let color = White
+    putStr "Ai "
+    putStr $ show color
+    x <- getLine
+    let t1 = generateTree1 color board2
+    let best1 = findBest t1
+    let board2 = getFromTree best1
+    let wynik1 = getResult best1
+    putStrLn $ show board2
+    putStrLn "-------"
+    checkResultAi board2 color wynik1
 
+checkResultAi:: Board -> Color -> Int -> IO()
+checkResultAi board1 color wynik = do
+    if(wynik == (-1)) then
+        gameOver board1 color
+    else do
+        if (color == Black) then do
+            let color2 = White
+            aiAiLoop board1 color2
+        else do
+            let color2 = Black
+            aiAiLoop board1 color2
+
+-------------------------------------------
 
 main :: IO ()
 main = do
