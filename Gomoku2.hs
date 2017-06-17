@@ -42,13 +42,13 @@ oppositeColor color
 
 --(evalBoard board color)
 
--- generateTree1 color board x1 y1 = Node board (evalBoard board color) x1 y1 [(Node x (evalBoard x color) i j [])| i <- [0..len], j <- [0..len], x <- [((genBoardsStart board color)!!i!!j)]]
---     where len = ((length $ (getPoints board)!!1)-1)
-
-generateTree1 color board = Node board (evalBoard board color) 0 0 [(Node x (evalBoard x color) i j [])| i <- [0..len], j <- [0..len], x <- [((genBoardsStart board color)!!i!!j)]]
+generateTree1 color board x1 y1 = Node board (evalBoard board color) x1 y1 [(Node x (evalBoard x color) i j [])| i <- [0..len], j <- [0..len], x <- [((genBoardsStart board color)!!i!!j)]]
     where len = ((length $ (getPoints board)!!1)-1)
 
-generateTree2 color board = Node board (evalBoard board color) 0 0 [(generateTree1 color x) | i <- [0..len], j<- [0..len], x <- [(genBoardsStart board color)!!i!!j]]
+-- generateTree1 color board = Node board (evalBoard board color) 0 0 [(Node x (evalBoard x color) i j [])| i <- [0..len], j <- [0..len], x <- [((genBoardsStart board color)!!i!!j)]]
+--     where len = ((length $ (getPoints board)!!1)-1)
+
+generateTree2 color board = Node board (evalBoard board color) 0 0 [(generateTree1 color x i j) | i <- [0..len], j<- [0..len], x <- [(genBoardsStart board color)!!i!!j]]
     where len =((length $ (getPoints board)!!1)-1)
 
 generateTree3 color board = Node board (evalBoard board color) 0 0 [(generateTree2 color x) | i <- [0..len], j<- [0..len], x <- [(genBoardsStart board color)!!i!!j]]
@@ -80,12 +80,13 @@ getWorstPos ((Node b v x y _):xs) bo v1 x1 y1
     | otherwise = getWorstPos xs bo v1 x1 y1
     where color = ((getPoints b)!!x!!y)
 
---minFind1 tree = findWorst tree
---maxFind1 (Node board v x y xs) color = findBest (Node board 0 0 0 [x | x <- (minFind1 xs)])
-
 minFind1 (Node board v x y []) lista = Node board v x y lista
 minFind1 (Node board v x y (l:xs)) lista = Node board v x y ((findWorst l):lista)
-minMax board color = findBest $ minFind1 (generateTree2 board color) []
+maxMin board color = findBest $ minFind1 (generateTree2 color board) []
+
+maxFind1 (Node board v x y []) lista = Node board v x y lista
+maxFind1 (Node board v x y (l:xs)) lista = Node board v x y ((findBest l):lista)
+minMax board color = findWorst $ maxFind1 (generateTree2 color board) []
 
 genBoardsStart:: Board -> Color -> [[Board]]
 genBoardsStart board1 color = genBoards board1 [] color ((length $ (getPoints board1)!!1)-1)
