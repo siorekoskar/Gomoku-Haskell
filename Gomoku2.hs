@@ -1,3 +1,5 @@
+module Gomoku2 where
+
 import Data.List
 
 data Board = Board {size :: Int, cells :: [[Point]]}
@@ -28,8 +30,14 @@ board10g = Board 10 (insertF board10 9 8 White)
 board10f = Board 10 (insertF board10g 9 9 White)
 board10false2 = Board 10 (insertF board10false 9 9 Black)
 
-generateTree1 color board = Node board (evalBoard board5 color) 0 0 [(Node x (evalBoard x color) i j [])| i <- [0..len], j <- [0..len], x <- [((genBoardsStart board color)!!i!!j)]]
+generateTree1 color board = Node board (evalBoard board color) 0 0 [(Node x (evalBoard x color) i j [])| i <- [0..len], j <- [0..len], x <- [((genBoardsStart board color)!!i!!j)]]
     where len = ((length $ (getPoints board)!!1)-1)
+
+generateTree2 color board = Node board (evalBoard board color) 0 0 [(generateTree1 color x) | i <- [0..len], j<- [0..len], x <- [(genBoardsStart board color)!!i!!j]]
+    where len =((length $ (getPoints board)!!1)-1)
+
+generateTree3 color board = Node board (evalBoard board color) 0 0 [(generateTree2 color x) | i <- [0..len], j<- [0..len], x <- [(genBoardsStart board color)!!i!!j]]
+    where len =((length $ (getPoints board)!!1)-1)
 
 getFromTree (Node board _ _ _ _) = board
 
@@ -61,7 +69,7 @@ genBoards board1 xs color which = genBoards board1 (boardNew:xs) color (which-1)
 generateBoards:: Board -> Color -> Int -> Int -> [Board] -> [Board]
 generateBoards _ _ _ (-1) xs = xs
 generateBoards board1 color which j xs
-    | elemIndices j available /= [] = generateBoards board1 color which (j-1) ((insertFigure board1 which j color):xs) --(Board ((length $ (getPoints board1) !!1)) (insertF board1 which j color):xs)--((insertFigure board1 which j color):xs)
+    | elemIndices j available /= [] = generateBoards board1 color which (j-1) ((insertFigure board1 which j color):xs)
     | otherwise = generateBoards board1 color which (j-1) (board1:xs)
     where available = ((getAvailablePositions board1)!!which)
 
@@ -152,103 +160,6 @@ addPoint x y figure list =
 rotateRight :: [[a]] -> [[a]]
 rotateRight = transpose . reverse
 
-
--- ---------------------------------------------
-pcAi :: IO ()
-pcAi = do
-    pcAiLoop board10
-
---pcAiLoop :: GameTree a -> IO ()
-pcAiLoop board5 = do
-    let color = Black
-    putStr "Ruch gracza "
-    putStrLn $ show color
-    putStr "Wiersz: "
-    x <- getLine
-    putStr "Kolumna: "
-    y <- getLine
-    --let board5 = getFromTree boardTree
-    let board2 = Board ((length $ (getPoints board5) !!1)) (insertF board5 (read x::Int) (read y::Int) color)
-    putStrLn $ show board2
-    putStr $ show color
-    --putStr " posiada punktow: "
-    let wynik = evalBoard board2 color
-    checkResultPcAi board2 color wynik
-    print wynik
-
-checkResultPcAi:: Board -> Color -> Int -> IO()
-checkResultPcAi board1 color wynik = do
-    if(wynik == (-1)) then
-        gameOver board1 color
-    else do
-        aiTime board1
-
-aiTime board5 = do
-        putStr "Ruch ai "
-        let color = White
-        let t1 = generateTree1 color board5
-            --print t1
-        let best1 = findBest t1
-        let board2 = getFromTree best1
-        putStrLn " "
-        putStrLn $ show board2
-        putStrLn $ show color
-        let wynik = evalBoard board2 color
-        check board2 wynik color
-
-check board5 wynik color= do
-    if (wynik == (-1)) then
-        gameOver board5 color
-    else do
-        pcAiLoop board5
-
-
--------------------------------------------
-
-aiAi :: IO ()
-aiAi = do
-    aiAiLoop board10false Black
-
-aiAiLoop board10 color = do
-    putStr "Ai "
-    putStr $ show color
-    x <- getLine
-    let t1 = generateTree1 color board10
-    let best1 = findBest t1
-    let board2 = getFromTree best1
-    let wynik1 = getResult best1
-    putStrLn $ show board2
-    putStrLn "-------"
-    let color = White
-    putStr "Ai "
-    putStr $ show color
-    x <- getLine
-    let t1 = generateTree1 color board2
-    let best1 = findBest t1
-    let board2 = getFromTree best1
-    let wynik1 = getResult best1
-    putStrLn $ show board2
-    putStrLn "-------"
-    checkResultAi board2 color wynik1
-
-checkResultAi:: Board -> Color -> Int -> IO()
-checkResultAi board1 color wynik = do
-    if(wynik == (-1)) then
-        gameOver board1 color
-    else do
-        if (color == Black) then do
-            let color2 = White
-            aiAiLoop board1 color2
-        else do
-            let color2 = Black
-            aiAiLoop board1 color2
-
--------------------------------------------
-
-main :: IO ()
-main = do
-    loop board White
-
 evalBoard:: Board -> Color -> Int
 evalBoard board1 color
     | wynik1 /= (-1) && wynik2 /= (-1) && wynik3 /= (-1) && wynik4 /= (-1) = wynik1+wynik2+wynik3+wynik4
@@ -258,37 +169,3 @@ evalBoard board1 color
         wynik2 = evalRows (Point 1 1 color) (rotateRight $ getPoints board1)
         wynik3 = evalDiags (Point 1 1 color) (diagonals $ getPoints board1) 0
         wynik4 = evalDiags (Point 1 1 color) (diagonals $ rotateRight $ getPoints board1) 0
-
-loop:: Board -> Color -> IO()
-loop board1 color = do
-    putStr "Ruch gracza "
-    putStrLn $ show color
-    putStr "Wiersz: "
-    x <- getLine
-    putStr "Kolumna: "
-    y <- getLine
-    let board2 = insertFigure board1 (read x::Int) (read y::Int) color
-    putStrLn $ show board2
-    putStr $ show color
-    putStr " posiada punktow: "
-    let wynik = evalBoard board2 color
-    print wynik
-    checkResult board2 color wynik
-
-checkResult:: Board -> Color -> Int -> IO()
-checkResult board1 color wynik = do
-    if(wynik == (-1)) then
-        gameOver board1 color
-    else do
-        if (color == Black) then do
-            let color2 = White
-            loop board1 color2
-        else do
-            let color2 = Black
-            loop board1 color2
-
-gameOver:: Board -> Color -> IO()
-gameOver board1 color = do
-    putStrLn $ show board1
-    putStrLn $ show color
-    putStrLn " WYGRAL"
