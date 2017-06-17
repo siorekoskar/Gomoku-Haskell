@@ -31,7 +31,7 @@ board5e = Board 4 (insertF board5D 2 3 White)
 board5f = Board 4 (insertF board5e 3 3 White)
 board5g = insertFigure board5 0 0 White
 board10 = Board 10 (makeBoard 9 9 [])
-board10false = Board 10 (insertF board10 5 5 White)
+board10false = Board 10 (insertF board10 8 8 White)
 board10g = Board 10 (insertF board10 9 8 White)
 board10f = Board 10 (insertF board10g 9 9 White)
 board10false2 = Board 10 (insertF board10false 9 9 Black)
@@ -45,8 +45,10 @@ oppositeColor color
 -- generateTree1 color board x1 y1 = Node board (evalBoard board color) x1 y1 [(Node x (evalBoard x color) i j [])| i <- [0..len], j <- [0..len], x <- [((genBoardsStart board color)!!i!!j)]]
 --     where len = ((length $ (getPoints board)!!1)-1)
 
-generateTree1 color board = Node board (evalBoard board color) 0 0 [(Node x (evalBoard x color) i j [])| i <- [0..len], j <- [0..len], x <- [((genBoardsStart board color)!!i!!j)]]
-    where len = ((length $ (getPoints board)!!1)-1)
+generateTree1 color board = Node board (evalBoard board color) 0 0 [(Node x ((evalBoard y oposCol) - (evalBoard x color)) i j [])| i <- [0..len], j <- [0..len], y <- [((genBoardsStart board oposCol)!!i!!j)], x <- [((genBoardsStart board color)!!i!!j)]]
+    where
+        len = ((length $ (getPoints board)!!1)-1)
+        oposCol = oppositeColor color
 
 generateTree2 color board = Node board (evalBoard board color) 0 0 [(generateTree1 color x) | i <- [0..len], j<- [0..len], x <- [(genBoardsStart board color)!!i!!j]]
     where len =((length $ (getPoints board)!!1)-1)
@@ -141,10 +143,8 @@ getRow what cells which = elemIndices what (cells!!which)
 evalRow:: Int -> [Int] -> Int -> Int -> Int
 evalRow lastInd [] sumator rowCount
     | sumator == 5 = 100000
-    -- | sumator == 5 = (-1)
     | otherwise = rowCount + (chainVal sumator)
 evalRow lastInd (x:xs) sumator rowCount
-    -- | sumator == 5 = (-1)
     | sumator == 5 = 100000
     | lastInd == (-1) = evalRow x xs 1 0
     | x == (lastInd+1) = evalRow x xs (sumator+1) rowCount
