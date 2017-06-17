@@ -25,7 +25,7 @@ pcAiLoop board5 = do
 
 checkResultPcAi:: Board -> Color -> Int -> IO()
 checkResultPcAi board1 color wynik = do
-    if(wynik == (-1)) then
+    if(wynik >= 100000) then
         gameOver board1 color
     else do
         aiTime board1
@@ -44,13 +44,10 @@ aiTime board5 = do
         check board2 wynik color
 
 check board5 wynik color= do
-    if (wynik == (-1)) then
+    if (wynik >= 100000) then
         gameOver board5 color
     else do
         pcAiLoop board5
-
-
--------------------------------------------
 
 aiAi :: IO ()
 aiAi = do
@@ -66,21 +63,12 @@ aiAiLoop board10 color = do
     let wynik1 = getResult best1
     putStrLn $ show board2
     putStrLn "-------"
-    let color = White
-    putStr "Ai "
-    putStr $ show color
-    x <- getLine
-    let t1 = generateTree1 color board2
-    let best1 = findBest t1
-    let board2 = getFromTree best1
-    let wynik1 = getResult best1
-    putStrLn $ show board2
-    putStrLn "-------"
     checkResultAi board2 color wynik1
+
 
 checkResultAi:: Board -> Color -> Int -> IO()
 checkResultAi board1 color wynik = do
-    if(wynik == (-1)) then
+    if(wynik >= 100000) then
         gameOver board1 color
     else do
         if (color == Black) then do
