@@ -1,11 +1,10 @@
-import Gomoku2
+import Gomoku3
 
--- ---------------------------------------------
+---------------------------------------------
 pcAi :: IO ()
 pcAi = do
     pcAiLoop board10
 
---pcAiLoop :: GameTree a -> IO ()
 pcAiLoop board5 = do
     let color = Black
     putStr "Ruch gracza "
@@ -14,11 +13,9 @@ pcAiLoop board5 = do
     x <- getLine
     putStr "Kolumna: "
     y <- getLine
-    --let board5 = getFromTree boardTree
     let board2 = Board ((length $ (getPoints board5) !!1)) (insertF board5 (read x::Int) (read y::Int) color)
     putStrLn $ show board2
     putStr $ show color
-    --putStr " posiada punktow: "
     let wynik = evalBoard board2 color
     checkResultPcAi board2 color wynik
     print wynik
@@ -33,7 +30,7 @@ checkResultPcAi board1 color wynik = do
 aiTime board5 = do
         putStr "Ruch ai "
         let color = White
-        let t1 = generateTree1 color board5
+        let t1 = generateTree1 color board5 0 0
             --print t1
         let best1 = findBest t1
         let board2 = getFromTree best1
@@ -49,22 +46,31 @@ check board5 wynik color= do
     else do
         pcAiLoop board5
 
+
+-------------------------------------------
+
 aiAi :: IO ()
 aiAi = do
+    --aiAiLoop board10false Black
     aiAiLoop board10false Black
 
 aiAiLoop board10 color = do
     putStr "Ai "
-    putStr $ show color
-    x <- getLine
-    let t1 = generateTree1 color board10
-    let best1 = findBest t1
-    let board2 = getFromTree best1
-    let wynik1 = getResult best1
+    putStrLn $ show color
+    let t1 = minMax board10 color
+    let board2 = getFromTree t1
+    let wynik1 = getResult t1
+    putStrLn $ show board2
+    putStrLn "-------"
+    let color = White
+    putStr "Ai "
+    putStrLn $ show color
+    let t1 = maxMin board2 color
+    let board2 = getFromTree t1
+    let wynik1 = getResult t1
     putStrLn $ show board2
     putStrLn "-------"
     checkResultAi board2 color wynik1
-
 
 checkResultAi:: Board -> Color -> Int -> IO()
 checkResultAi board1 color wynik = do
@@ -78,10 +84,10 @@ checkResultAi board1 color wynik = do
             let color2 = Black
             aiAiLoop board1 color2
 
--------------------------------------------
+-- -------------------------------------------
 
-main :: IO ()
-main = do
+pcPc :: IO ()
+pcPc = do
     loop board White
 
 
@@ -103,7 +109,7 @@ loop board1 color = do
 
 checkResult:: Board -> Color -> Int -> IO()
 checkResult board1 color wynik = do
-    if(wynik == (-1)) then
+    if(wynik >= 100000) then
         gameOver board1 color
     else do
         if (color == Black) then do
@@ -115,6 +121,7 @@ checkResult board1 color wynik = do
 
 gameOver:: Board -> Color -> IO()
 gameOver board1 color = do
+    putStrLn ""
     putStrLn $ show board1
     putStrLn $ show color
     putStrLn " WYGRAL"
