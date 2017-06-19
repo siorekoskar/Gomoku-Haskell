@@ -1,5 +1,5 @@
 # Gomoku-Haskell
-Start by lodaing game2.hs and typing following commands in Ghci:
+Start by loading game2.hs and typing following commands in Ghci:
 
 # Player vs player:
 pcPc
