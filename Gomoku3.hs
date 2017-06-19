@@ -1,6 +1,6 @@
 {-# LANGUAGE InstanceSigs #-}
 
-module Gomoku2 where
+module Gomoku3 where
 
 import Data.List
 
@@ -15,10 +15,6 @@ data Color = Black | White | Empty deriving Eq
 
 data GameTree a = Node a Int Int Int [GameTree a] deriving Show
 
--- instance Functor GameTree a where
---     fmap:: (a->b) -> GameTree a -> GameTree a
---     fmap f (Node b v x y (xs:list)) = Node b v x y
-
 board :: Board
 board = Board 19 (makeBoard 18 18 [])
 newBoard = Board 19 (insertF board 5 8 Black)
@@ -30,8 +26,8 @@ board5D = Board 4 (insertF board5B 2 2 Black)
 board5e = Board 4 (insertF board5D 2 3 White)
 board5f = Board 4 (insertF board5e 3 3 White)
 board5g = insertFigure board5 0 0 White
-board10 = Board 10 (makeBoard 9 9 [])
-board10false = Board 10 (insertF board10 8 8 White)
+board10 = Board 19 (makeBoard 18 18 [])
+board10false = Board 10 (insertF board10 5 5 White)
 board10g = Board 10 (insertF board10 9 8 White)
 board10f = Board 10 (insertF board10g 9 9 White)
 board10false2 = Board 10 (insertF board10false 9 9 Black)
@@ -40,18 +36,16 @@ oppositeColor color
     | color == Black = White
     | otherwise = Black
 
---(evalBoard board color)
 
--- generateTree1 color board x1 y1 = Node board (evalBoard board color) x1 y1 [(Node x (evalBoard x color) i j [])| i <- [0..len], j <- [0..len], x <- [((genBoardsStart board color)!!i!!j)]]
---     where len = ((length $ (getPoints board)!!1)-1)
-
-generateTree1 color board = Node board (evalBoard board color) 0 0 [(Node x ((evalBoard y oposCol) - (evalBoard x color)) i j [])| i <- [0..len], j <- [0..len], y <- [((genBoardsStart board oposCol)!!i!!j)], x <- [((genBoardsStart board color)!!i!!j)]]
+generateTree1 color board x1 y1 = Node board (evalBoard board color) x1 y1 [(Node x ((evalBoard y oposCol) - (evalBoard x color)) i j [])| i <- [0..len], j <- [0..len], y <- [((genBoardsStart board oposCol)!!i!!j)],  x <- [((genBoardsStart board color)!!i!!j)]]
     where
         len = ((length $ (getPoints board)!!1)-1)
         oposCol = oppositeColor color
 
-generateTree2 color board = Node board (evalBoard board color) 0 0 [(generateTree1 color x) | i <- [0..len], j<- [0..len], x <- [(genBoardsStart board color)!!i!!j]]
-    where len =((length $ (getPoints board)!!1)-1)
+generateTree2 color board = Node board (evalBoard board color) 0 0 [(generateTree1 color x i j) | i <- [0..len], j<- [0..len], y <- [((genBoardsStart board oposCol)!!i!!j)], x <- [(genBoardsStart board color)!!i!!j]]
+    where
+        len =((length $ (getPoints board)!!1)-1)
+        oposCol = oppositeColor color
 
 generateTree3 color board = Node board (evalBoard board color) 0 0 [(generateTree2 color x) | i <- [0..len], j<- [0..len], x <- [(genBoardsStart board color)!!i!!j]]
     where len =((length $ (getPoints board)!!1)-1)
@@ -64,15 +58,9 @@ findBest (Node board v x y ((Node b v1 x1 y1 []):xs)) = getBestPos xs b v x y
 
 getBestPos [] b v x y = (Node b v x y [])
 getBestPos ((Node b v x y _):xs) bo v1 x1 y1
-    | v1 <= v && (color /= (Point 1 1 Empty))  = getBestPos xs b v x y
+    | v1 < v && (color /= (Point 1 1 Empty))  = getBestPos xs b v x y
     | otherwise = getBestPos xs bo v1 x1 y1
     where color = ((getPoints b)!!x!!y)
-
-    -- | v1 <= v  = getBestPos xs b v x y
---    | v == (-1) = (Node b v x y [])
-    -- | color /= (Point 1 1 Empty) && x == (length((getPoints b)!!1)-1) = getBestPos [] bo v1 x1 y1
-
-    -- | color /= Empty = getBestPos xs bo v1 x1 y1
 
 findWorst (Node board v x y ((Node b v1 x1 y1 []):xs)) = getWorstPos xs b v x y
 
@@ -82,12 +70,13 @@ getWorstPos ((Node b v x y _):xs) bo v1 x1 y1
     | otherwise = getWorstPos xs bo v1 x1 y1
     where color = ((getPoints b)!!x!!y)
 
---minFind1 tree = findWorst tree
---maxFind1 (Node board v x y xs) color = findBest (Node board 0 0 0 [x | x <- (minFind1 xs)])
-
 minFind1 (Node board v x y []) lista = Node board v x y lista
 minFind1 (Node board v x y (l:xs)) lista = Node board v x y ((findWorst l):lista)
-minMax board color = findBest $ minFind1 (generateTree2 board color) []
+maxMin board color = findBest $ minFind1 (generateTree2 color board) []
+
+maxFind1 (Node board v x y []) lista = Node board v x y lista
+maxFind1 (Node board v x y (l:xs)) lista = Node board v x y ((findBest l):lista)
+minMax board color = findWorst $ maxFind1 (generateTree2 color board) []
 
 genBoardsStart:: Board -> Color -> [[Board]]
 genBoardsStart board1 color = genBoards board1 [] color ((length $ (getPoints board1)!!1)-1)
@@ -194,8 +183,6 @@ rotateRight = transpose . reverse
 
 evalBoard:: Board -> Color -> Int
 evalBoard board1 color = wynik1+wynik2+wynik3+wynik4
---    | wynik1 /= (-1) && wynik2 /= (-1) && wynik3 /= (-1) && wynik4 /= (-1) = wynik1+wynik2+wynik3+wynik4
---    | otherwise = (-1)
     where
         wynik1 = evalRows (Point 1 1 color) (getPoints board1)
         wynik2 = evalRows (Point 1 1 color) (rotateRight $ getPoints board1)
