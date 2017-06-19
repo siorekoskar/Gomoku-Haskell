@@ -1,4 +1,5 @@
 # Gomoku-Haskell
+Start by typing following commands in Ghci:
 
 # Player vs player:
 pcPc
